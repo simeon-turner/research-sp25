@@ -1,0 +1,23 @@
+// A very simple adder implementation for learning Calyx
+import "primitives/core.futil";
+
+component main() -> () {
+  cells {
+    @external(1) A0 = std_reg(32);
+    @external(1) B0 = std_reg(32);
+    @external(1) Sum0 = std_reg(32);
+    add0 = std_add(32);
+  }
+  wires {
+    group add {
+      add0.left = A0.out;
+      add0.right = B0.out;
+      Sum0.write_en = 1'd1;
+      Sum0.in = add0.out;
+      add[done] = Sum0.done ? 1'd1;
+    }
+  }
+  control {
+    add;
+  }
+}

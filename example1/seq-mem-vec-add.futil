@@ -1,7 +1,7 @@
 // Use dynamic axi generator? As opposed to read-write-compute (used for runt tests):
 // dynamic=false
-import "core.futil";
-import "seq.futil";
+import "primitives/core.futil";
+import "primitives/memories/seq.futil";
 component main() -> () {                                                                                                                                                                                 
   cells {
       //Modified to 64 width address because XRT expects 64 bit memory addresses
