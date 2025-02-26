@@ -1,0 +1,45 @@
+// A very simple adder implementation for learning Calyx
+import "primitives/core.futil";
+import "primitives/memories/comb.futil";
+
+component main() -> () {
+  cells {
+    @external(1) A0 = comb_mem_d1(32, 1, 1);
+    @external(1) B0 = comb_mem_d1(32, 1, 1);
+    @external(1) Prod0 = comb_mem_d1(32, 1, 1);
+    
+    Atmp = std_reg(32);
+    r_shift = std_rsh(32);
+
+    Btmp = std_reg(32);
+    const0 = std_const(32, 0);
+    l_shift = std_lsh(32);
+    bit_slice = std_bit_slice(32, 0, 0, 1)
+
+    add = std_add(32);
+  }
+  wires {
+    A0.addr0 = 1'd0;
+    B0.addr0 = 1'd0;
+    Prod0.addr0 = 1'd0;
+
+    group set {
+      Atmp.write_en = 1'd1;
+      Btmp.write_en = 1'd1;
+      Prod0.write_en = 1'd1;
+      Atmp.write_data = A0.read_data;
+      Btmp.write_data = B0.read_data;
+      Prod0.write_data = const0;
+      set[done] = Prod0.done ? 1'd1;
+    }
+    group iteration {
+      
+    }
+  }
+  control {
+    seq {
+      set;
+      while 
+    }
+  }
+}
