@@ -19,7 +19,7 @@ component main() -> () {
       A0.content_en = 1'd1;
       B0.content_en = 1'd1;
     }
-    static<67> group multiply {
+    static<33> group multiply {
       mult.go = 1'd1;
       mult.left = A0.read_data;
       mult.right = B0.read_data;

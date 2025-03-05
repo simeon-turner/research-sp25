@@ -1,4 +1,5 @@
-// An iterative mutltiplier
+// An static iterative mutltiplier
+// Takes exactly 33 cycles to execute
 import "primitives/core.futil";
 import "primitives/memories/seq.futil";
 
@@ -16,11 +17,6 @@ component iterative_multiplier(left: 32, right: 32) -> (out: 32) {
     mux0 = std_mux(32);
     add0 = std_add(32);
 
-    // logic components for counting the number of cycles
-    i0 = std_reg(32);
-    neq0 = std_neq(32);
-    sub0 = std_sub(32);
-
     // frequently used constants
     const0 = std_const(32, 0);
     const1 = std_const(32, 1);
@@ -34,16 +30,10 @@ component iterative_multiplier(left: 32, right: 32) -> (out: 32) {
       A_tmp.write_en = 1'd1;
       B_tmp.write_en = 1'd1;
       Prod_tmp.write_en = 1'd1;
-      i0.write_en = 1'd1;
 
       A_tmp.in = left;
       B_tmp.in = right;
-      i0.in = const2.out;
       Prod_tmp.in = const0.out;
-    }
-    comb group condition {
-      neq0.left = const0.out;
-      neq0.right = i0.out;
     }
     static<1> group iterate {
       A_tmp.write_en = 1'd1;
@@ -66,22 +56,13 @@ component iterative_multiplier(left: 32, right: 32) -> (out: 32) {
       Prod_tmp.write_en = 1'd1;
       Prod_tmp.in = add0.out;
     }
-    static<1> group decrement {
-      sub0.left = i0.out;
-      sub0.right = const1.out;
-      i0.write_en = 1'd1;
-      i0.in = sub0.out;
-    }
-}
+  }
 
   control {
     seq {
       write_data;
-      while neq0.out with condition {
-        static par {
-          iterate;
-          decrement;
-        }
+      static repeat 32 {
+        iterate;
       }
     }
   }
