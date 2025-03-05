@@ -1,12 +1,14 @@
 // An iterative mutltiplier
 import "primitives/core.futil";
-import "primitives/memories/comb.futil";
+import "primitives/memories/seq.futil";
 
 component main() -> () {
   cells {
-    @external(1) A0 = comb_mem_d1(32, 1, 1);
-    @external(1) B0 = comb_mem_d1(32, 1, 1);
-    @external(1) Prod0 = comb_mem_d1(32, 1, 1);
+    @external(1) A0 = seq_mem_d1(32, 1, 1);
+    @external(1) B0 = seq_mem_d1(32, 1, 1);
+    @external(1) Prod0 = seq_mem_d1(32, 1, 1);
+
+    Prod_tmp = std_reg(32);
     
     A_tmp = std_reg(32);
     r_shift = std_rsh(32);
@@ -16,36 +18,36 @@ component main() -> () {
     mux0 = std_mux(32);
     add0 = std_add(32);
 
-    i0 = std_reg(32);
     neq0 = std_neq(32);
-    sub0 = std_sub(32);
 
     const0 = std_const(32, 0);
     const1 = std_const(32, 1);
-    const2 = std_const(32, 31);
+    //const2 = std_const(32, 31);
   }
 
   wires {
-    group set {
+    static<1> group set {
       A0.addr0 = 1'd0;
       B0.addr0 = 1'd0;
       Prod0.addr0 = 1'd0;
+      A0.content_en = 1'd1;
+      B0.content_en = 1'd1;
+      Prod0.content_en = 1'd1;
+    }
+    static<1> group write_data {
       A_tmp.write_en = 1'd1;
       B_tmp.write_en = 1'd1;
-      i0.write_en = 1'd1;
-      Prod0.write_en = 1'd1;
+      Prod_tmp.write_en = 1'd1;
 
       A_tmp.in = A0.read_data;
       B_tmp.in = B0.read_data;
-      i0.in = const2.out;
-      Prod0.write_data = const0.out;
-      set[done] = Prod0.done ? 1'd1;
+      Prod_tmp.in = const0.out;
     }
     comb group condition {
       neq0.left = const0.out;
-      neq0.right = i0.out;
+      neq0.right = B_tmp.out;
     }
-    group iterate {
+    static<1> group iterate {
       A_tmp.write_en = 1'd1;
       l_shift.left = A_tmp.out;
       l_shift.right = const1.out;
@@ -62,30 +64,27 @@ component main() -> () {
       mux0.cond = bit_slice.out;
 
       add0.left = mux0.out;
-      add0.right = Prod0.read_data;
+      add0.right = Prod_tmp.out;
+      Prod_tmp.write_en = 1'd1;
+      Prod_tmp.in = add0.out;
+    }
+    static<1> group write_result {
       Prod0.addr0 = 1'd0;
       Prod0.write_en = 1'd1;
-      Prod0.write_data = add0.out;
-      iterate[done] = Prod0.done ? 1'd1;
-    }
-    group decrement {
-      sub0.left = i0.out;
-      sub0.right = const1.out;
-      i0.write_en = 1'd1;
-      i0.in = sub0.out;
-      decrement[done] = i0.done ? 1'd1;
+      Prod0.content_en = 1'd1;
+
+      Prod0.write_data = Prod_tmp.out;
     }
   }
 
   control {
     seq {
       set;
+      write_data;
       while neq0.out with condition {
-        par {
-          iterate;
-          decrement;
-        }
+        iterate;
       }
+      write_result;
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "A0": {
     "data": [
-      234798
+      68
     ],
     "format": {
       "numeric_type": "bitnum",
@@ -11,7 +11,7 @@
   },
   "B0": {
     "data": [
-      8745
+      15
     ],
     "format": {
       "numeric_type": "bitnum",
