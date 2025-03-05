@@ -1,0 +1,88 @@
+// An iterative mutltiplier
+import "primitives/core.futil";
+import "primitives/memories/seq.futil";
+
+component iterative_multiplier(left: 32, right: 32) -> (out: 32) {
+  cells {
+    // registers fro processing product and multiplicands
+    A_tmp = std_reg(32);
+    B_tmp = std_reg(32);
+    Prod_tmp = std_reg(32);
+    
+    // logic components for computing the product
+    r_shift = std_rsh(32);
+    l_shift = std_lsh(32);
+    bit_slice = std_bit_slice(32, 0, 1, 1);
+    mux0 = std_mux(32);
+    add0 = std_add(32);
+
+    // logic components for counting the number of cycles
+    i0 = std_reg(32);
+    neq0 = std_neq(32);
+    sub0 = std_sub(32);
+
+    // frequently used constants
+    const0 = std_const(32, 0);
+    const1 = std_const(32, 1);
+    const2 = std_const(32, 31);
+  }
+
+  wires {
+    out = Prod_tmp.out;
+
+    static<1> group write_data {
+      A_tmp.write_en = 1'd1;
+      B_tmp.write_en = 1'd1;
+      Prod_tmp.write_en = 1'd1;
+      i0.write_en = 1'd1;
+
+      A_tmp.in = left;
+      B_tmp.in = right;
+      i0.in = const2.out;
+      Prod_tmp.in = const0.out;
+    }
+    comb group condition {
+      neq0.left = const0.out;
+      neq0.right = i0.out;
+    }
+    static<1> group iterate {
+      A_tmp.write_en = 1'd1;
+      l_shift.left = A_tmp.out;
+      l_shift.right = const1.out;
+      A_tmp.in = l_shift.out;
+
+      B_tmp.write_en = 1'd1;
+      bit_slice.in = B_tmp.out;
+      r_shift.left = B_tmp.out;
+      r_shift.right = const1.out;
+      B_tmp.in = r_shift.out;
+
+      mux0.fal = const0.out;
+      mux0.tru = A_tmp.out;
+      mux0.cond = bit_slice.out;
+
+      add0.left = mux0.out;
+      add0.right = Prod_tmp.out;
+      Prod_tmp.write_en = 1'd1;
+      Prod_tmp.in = add0.out;
+    }
+    static<1> group decrement {
+      sub0.left = i0.out;
+      sub0.right = const1.out;
+      i0.write_en = 1'd1;
+      i0.in = sub0.out;
+    }
+}
+
+  control {
+    seq {
+      write_data;
+      while neq0.out with condition {
+        static par {
+          iterate;
+          decrement;
+        }
+      }
+    }
+  }
+}

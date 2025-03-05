@@ -1,0 +1,45 @@
+// An iterative mutltiplier
+import "primitives/core.futil";
+import "primitives/memories/seq.futil";
+import "static_multiplier.futil";
+
+component main() -> () {
+  cells {
+    @external(1) A0 = seq_mem_d1(32, 1, 1);
+    @external(1) B0 = seq_mem_d1(32, 1, 1);
+    @external(1) Prod0 = seq_mem_d1(32, 1, 1);
+
+    mult = iterative_multiplier();
+  }
+
+  wires {
+    static<1> group set {
+      A0.addr0 = 1'd0;
+      B0.addr0 = 1'd0;
+      A0.content_en = 1'd1;
+      B0.content_en = 1'd1;
+    }
+    static<67> group multiply {
+      mult.go = 1'd1;
+      mult.left = A0.read_data;
+      mult.right = B0.read_data;
+      
+      //multiply[done] = mult.done;
+    }
+    static<1> group write_result {
+      Prod0.addr0 = 1'd0;
+      Prod0.write_en = 1'd1;
+      Prod0.content_en = 1'd1;
+
+      Prod0.write_data = mult.out;
+    }
+  }
+
+  control {
+    seq {
+      set;
+      multiply;
+      write_result;
+    }
+  }
+}
