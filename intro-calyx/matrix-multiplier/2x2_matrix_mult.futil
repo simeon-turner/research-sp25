@@ -1,0 +1,168 @@
+// A 2x2 matrix mutltiplier
+
+import "primitives/core.futil";
+import "primitives/memories/seq.futil";
+import "static_multiplier.futil";
+
+component main() -> () {
+  cells {
+    @external(1) A0 = seq_mem_d1(32, 4, 2);
+    @external(1) B0 = seq_mem_d1(32, 4, 2);
+    @external(1) C0 = seq_mem_d1(32, 4, 2);
+
+    // registers to store values
+    A0_tmp = std_reg(32);
+    B0_tmp = std_reg(32);
+    C0_tmp = std_reg(32);
+
+    // for calculating the partial sum
+    add32 = std_add(32);
+    mult32 = iterative_multiplier();
+
+    // for calculating the address
+    add0 = std_add(2);
+    l_shiftA = std_lsh(2); // left << right
+    addA = std_add(2);
+    l_shiftB = std_lsh(2); // left << right
+    addB = std_add(2);
+    l_shiftC = std_lsh(2); // left << right
+    addC = std_add(2);
+
+    // constants with  bit width 32
+    const0_32 = std_const(32, 0);
+
+    // to keep track of memory index
+    // i for row of C0, j for column of C0, k for element being accumulated from A0 and B0
+    i0 = std_reg(2);
+    j0 = std_reg(2);
+    k0 = std_reg(2);
+
+    // constants with bit width 2
+    const0_2 = std_const(2, 0);
+    const1_2 = std_const(2, 1);
+  }
+
+  wires {
+    
+    add32.right = mult32.out;
+    add32.left = C0_tmp.out;
+    
+    static<1> group init_i {
+      i0.write_en = 1'd1;
+      i0.in = const0_2.out;
+    }
+    static<1> group init_j {
+      j0.write_en = 1'd1;
+      j0.in = const0_2.out;
+    }
+    static<1> group init_k {
+      k0.write_en = 1'd1;
+      k0.in = const0_2.out;
+    }
+    static<1> group incr_i {
+      i0.write_en = 1'd1;
+      add0.left = i0.out;
+      add0.right = const1_2.out;
+      i0.in = add0.out;
+    }
+    static<1> group incr_j {
+      j0.write_en = 1'd1;
+      add0.left = j0.out;
+      add0.right = const1_2.out;
+      j0.in = add0.out;
+    }
+    static<1> group incr_k {
+      k0.write_en = 1'd1;
+      add0.left = k0.out;
+      add0.right = const1_2.out;
+      k0.in = add0.out;
+    }
+
+    static<1> group reset_C0_tmp {
+      C0_tmp.write_en = 1'd1;
+      C0_tmp.in = const0_32.out;
+    }
+    static<2> group calc_addr {
+      A0.content_en = 1'd1;
+      B0.content_en = 1'd1;
+
+      l_shiftA.left = i0.out;
+      l_shiftA.right = const1_2.out;
+      addA.left = k0.out;
+      addA.right = l_shiftA.out;
+
+      l_shiftB.left = k0.out;
+      l_shiftB.right = const1_2.out;
+      addB.left = j0.out;
+      addB.right = l_shiftB.out;
+
+      A0.addr0 = addA.out;
+      B0.addr0 = addB.out;
+    }
+    static<1> group write_tmp_regs {
+      A0_tmp.write_en = 1'd1;
+      B0_tmp.write_en = 1'd1;
+      A0_tmp.in = A0.read_data;
+      B0_tmp.in = B0.read_data;
+    }
+    static<33> group multiply {
+      mult32.left = A0_tmp.out;
+      mult32.right = B0_tmp.out;
+      mult32.go = 1'd1;
+    }
+    static<1> group update {
+      C0_tmp.write_en = 1'd1;
+      C0_tmp.in = add32.out;
+    }
+    static<1> group write_val {
+      C0.content_en = 1'd1;
+      C0.write_en = 1'd1;
+
+      l_shiftC.left = i0.out;
+      l_shiftC.right = const1_2.out;
+      addC.left = j0.out;
+      addC.right = l_shiftA.out;
+
+      C0.addr0 = addC.out;
+      C0.write_data = C0_tmp.out;
+    }
+  }
+
+  control {
+    static seq {
+      init_i;
+
+      static repeat 2 { // loop over the rows
+        static seq {
+          init_j;
+
+          static repeat 2 { // loop over the columns
+            static seq {
+              static par {
+                init_k;
+                reset_C0_tmp;
+              }
+
+              static repeat 2 { // loop over elements to accumulate
+                static seq {
+                  calc_addr;
+                  write_tmp_regs;
+
+                  multiply;
+                  update;
+
+                  incr_k;
+                }
+              } // end loop k
+
+              write_val;
+              incr_j;
+            }
+          } // end loop j
+
+          incr_i;
+        }
+      } // end loop i
+    }
+  } // end control
+}
