@@ -83,7 +83,7 @@ component main() -> () {
       C0_tmp.write_en = 1'd1;
       C0_tmp.in = const0_32.out;
     }
-    static<2> group calc_addr {
+    static<1> group calc_addr {
       A0.content_en = 1'd1;
       B0.content_en = 1'd1;
 
