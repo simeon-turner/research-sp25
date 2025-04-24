@@ -1,0 +1,411 @@
+// A test case for 4-port memory and equivalents using two 2x2 matrix mutltiplier processing elements
+
+import "primitives/core.futil";
+import "primitives/memories/seq.futil";
+import "matrix-multiplier/static_multiplier.futil";
+import "mem-4-port/seq_mem_4_port.futil";
+
+component main() -> () {
+  cells {
+    //===========================================================================================
+    // GENERAL HARDWARE
+    //===========================================================================================
+
+    @external(1) INPUT_MEM = seq_mem_d1(32, 32, 5);
+    @external(1) OUTPUT_MEM = seq_mem_d1(32, 32, 5);
+
+    MAIN_MEM = seq_mem_4_port(32, 32, 5);
+
+    // constants with  bit width 32
+    const0_32 = std_const(32, 0);
+
+    // constants with bit width 5
+    const0_5 = std_const(5, 0);
+    const1_5 = std_const(5, 1);
+
+    // hardware for memory loading and unloading
+    load_addr = std_reg(5);
+    add_laddr = std_add(5);
+
+    //===========================================================================================
+    // MATRIX MULT PE 1
+    //===========================================================================================
+
+    // registers to store values
+    A0_tmp_1 = std_reg(32);
+    B0_tmp_1 = std_reg(32);
+    C0_tmp_1 = std_reg(32);
+
+    // for calculating the partial sum
+    add32_1 = std_add(32);
+    mult32_1 = iterative_multiplier();
+
+    // for calculating the address
+    add0_1 = std_add(2);
+    l_shiftA_1 = std_lsh(2); // left << right
+    addA_1 = std_add(2);
+    l_shiftB_1 = std_lsh(2); // left << right
+    addB_1 = std_add(2);
+    l_shiftC_1 = std_lsh(2); // left << right
+    addC_1 = std_add(2);
+
+    // to keep track of memory index
+    // i for row of C0, j for column of C0, k for element being accumulated from A0 and B0
+    i0_1 = std_reg(2);
+    j0_1 = std_reg(2);
+    k0_1 = std_reg(2);
+
+    //===========================================================================================
+    // MATRIX MULT PE 2
+    //===========================================================================================
+
+    // registers to store values
+    A0_tmp_2 = std_reg(32);
+    B0_tmp_2 = std_reg(32);
+    C0_tmp_2 = std_reg(32);
+
+    // for calculating the partial sum
+    add32_2 = std_add(32);
+    mult32_2 = iterative_multiplier();
+
+    // for calculating the address
+    add0_2 = std_add(2);
+    l_shiftA_2 = std_lsh(2); // left << right
+    addA_2 = std_add(2);
+    l_shiftB_2 = std_lsh(2); // left << right
+    addB_2 = std_add(2);
+    l_shiftC_2 = std_lsh(2); // left << right
+    addC_2 = std_add(2);
+
+    // to keep track of memory index
+    // i for row of C0, j for column of C0, k for element being accumulated from A0 and B0
+    i0_2 = std_reg(2);
+    j0_2 = std_reg(2);
+    k0_2 = std_reg(2);
+  }
+
+  wires {
+    //===========================================================================================
+    // WIRE GROUPS FOR LOADING AND UNLOADING MEMORY
+    //===========================================================================================
+
+    static<1> group init_l {
+      load_addr.write_en = 1'd1;
+      load_addr.in = const0_5.out;
+    }
+    static<1> group incr_l {
+      load_addr.write_en = 1'd1;
+      add_laddr.left = load_addr.out;
+      add_laddr.right = const1_5.out;
+      load_addr.in = add_laddr.out;
+    }
+    static<5> group write_main_mem {
+      INPUT_MEM.addr0 = load_addr.out;
+      INPUT_MEM.content_en = 1'd1;
+
+      MAIN_MEM.addr0 = load_addr.out;
+      MAIN_MEM.write_en0 = INPUT_MEM.done;
+      MAIN_MEM.content_en0 = INPUT_MEM.done;
+
+      MAIN_MEM.write_data0 = INPUT_MEM.read_data;
+    }
+    static<5> group read_main_mem_r {
+      MAIN_MEM.addr0 = load_addr.out;
+      MAIN_MEM.content_en0 = 1'd1;
+    }
+    static<1> group read_main_mem_w {
+      OUTPUT_MEM.addr0 = load_addr.out;
+      OUTPUT_MEM.write_en = 1'd1;
+      OUTPUT_MEM.content_en = 1'd1;
+
+      OUTPUT_MEM.write_data = MAIN_MEM.read_data0;
+    }
+    
+    //===========================================================================================
+    // WIRE GROUPS FOR MATRIX MULT PE 1
+    //===========================================================================================
+
+//    add32_1.right = mult32_1.out;
+//    add32_1.left = C0_tmp_1.out;
+//    
+//    static<1> group init_i_1 {
+//      i0_1.write_en = 1'd1;
+//      i0_1.in = const0_2.out;
+//    }
+//    static<1> group init_j_1 {
+//      j0_1.write_en = 1'd1;
+//      j0_1.in = const0_2.out;
+//    }
+//    static<1> group init_k_1 {
+//      k0_1.write_en = 1'd1;
+//      k0_1.in = const0_2.out;
+//    }
+//    static<1> group incr_i_1 {
+//      i0_1.write_en = 1'd1;
+//      add0_1.left = i0_1.out;
+//      add0_1.right = const1_2.out;
+//      i0_1.in = add0_1.out;
+//    }
+//    static<1> group incr_j_1 {
+//      j0_1.write_en = 1'd1;
+//      add0_1.left = j0_1.out;
+//      add0_1.right = const1_2.out;
+//      j0_1.in = add0_1.out;
+//    }
+//    static<1> group incr_k_1 {
+//      k0_1.write_en = 1'd1;
+//      add0_1.left = k0_1.out;
+//      add0_1.right = const1_2.out;
+//      k0_1.in = add0_1.out;
+//    }
+//
+//    static<1> group reset_C0_tmp_1 {
+//      C0_tmp_1.write_en = 1'd1;
+//      C0_tmp_1.in = const0_32.out;
+//    }
+//    static<1> group calc_addr_1 {
+//      A0.content_en = 1'd1;
+//      B0.content_en = 1'd1;
+//
+//      l_shiftA_1.left = i0_1.out;
+//      l_shiftA_1.right = const1_2.out;
+//      addA_1.left = k0_1.out;
+//      addA_1.right = l_shiftA_1.out;
+//
+//      l_shiftB_1.left = k0_1.out;
+//      l_shiftB_1.right = const1_2.out;
+//      addB_1.left = j0_1.out;
+//      addB_1.right = l_shiftB_1.out;
+//
+//      A0.addr0 = addA_1.out;
+//      B0.addr0 = addB_1.out;
+//    }
+//    static<1> group write_tmp_regs_1 {
+//      A0_tmp_1.write_en = 1'd1;
+//      B0_tmp_1.write_en = 1'd1;
+//      A0_tmp_1.in = A0.read_data;
+//      B0_tmp_1.in = B0.read_data;
+//    }
+//    static<33> group multiply_1 {
+//      mult32_1.left = A0_tmp_1.out;
+//      mult32_1.right = B0_tmp_1.out;
+//      mult32_1.go = 1'd1;
+//    }
+//    static<1> group update_1 {
+//      C0_tmp_1.write_en = 1'd1;
+//      C0_tmp_1.in = add32_1.out;
+//    }
+//    static<1> group write_val_1 {
+//      C0.content_en = 1'd1;
+//      C0.write_en = 1'd1;
+//
+//      l_shiftC_1.left = i0_1.out;
+//      l_shiftC_1.right = const1_2.out;
+//      addC_1.left = j0_1.out;
+//      addC_1.right = l_shiftA_1.out;
+//
+//      C0.addr0 = addC_1.out;
+//      C0.write_data = C0_tmp_1.out;
+//    }
+//
+    //===========================================================================================
+    // WIRE GROUPS FOR MATRIX MULT PE 2
+    //===========================================================================================
+
+//    add32_2.right = mult32_2.out;
+//    add32_2.left = C0_tmp_2.out;
+//    
+//    static<1> group init_i_2 {
+//      i0_2.write_en = 1'd1;
+//      i0_2.in = const0_2.out;
+//    }
+//    static<1> group init_j_2 {
+//      j0_2.write_en = 1'd1;
+//      j0_2.in = const0_2.out;
+//    }
+//    static<1> group init_k_2 {
+//      k0_2.write_en = 1'd1;
+//      k0_2.in = const0_2.out;
+//    }
+//    static<1> group incr_i_2 {
+//      i0_2.write_en = 1'd1;
+//      add0_2.left = i0_2.out;
+//      add0_2.right = const1_2.out;
+//      i0_2.in = add0_2.out;
+//    }
+//    static<1> group incr_j_2 {
+//      j0_2.write_en = 1'd1;
+//      add0_2.left = j0_2.out;
+//      add0_2.right = const1_2.out;
+//      j0_2.in = add0_2.out;
+//    }
+//    static<1> group incr_k_2 {
+//      k0_2.write_en = 1'd1;
+//      add0_2.left = k0_2.out;
+//      add0_2.right = const1_2.out;
+//      k0_2.in = add0_2.out;
+//    }
+//
+//    static<1> group reset_C0_tmp_2 {
+//      C0_tmp_2.write_en = 1'd1;
+//      C0_tmp_2.in = const0_32.out;
+//    }
+//    static<1> group calc_addr_2 {
+//      A0.content_en = 1'd1;
+//      B0.content_en = 1'd1;
+//
+//      l_shiftA_2.left = i0_2.out;
+//      l_shiftA_2.right = const1_2.out;
+//      addA_2.left = k0_2.out;
+//      addA_2.right = l_shiftA_2.out;
+//
+//      l_shiftB_2.left = k0_2.out;
+//      l_shiftB_2.right = const1_2.out;
+//      addB_2.left = j0_2.out;
+//      addB_2.right = l_shiftB_2.out;
+//
+//      A0.addr0 = addA_2.out;
+//      B0.addr0 = addB_2.out;
+//    }
+//    static<1> group write_tmp_regs_2 {
+//      A0_tmp_2.write_en = 1'd1;
+//      B0_tmp_2.write_en = 1'd1;
+//      A0_tmp_2.in = A0.read_data;
+//      B0_tmp_2.in = B0.read_data;
+//    }
+//    static<33> group multiply_2 {
+//      mult32_2.left = A0_tmp_2.out;
+//      mult32_2.right = B0_tmp_2.out;
+//      mult32_2.go = 1'd1;
+//    }
+//    static<1> group update_2 {
+//      C0_tmp_2.write_en = 1'd1;
+//      C0_tmp_2.in = add32_2.out;
+//    }
+//    static<1> group write_val_2 {
+//      C0.content_en = 1'd1;
+//      C0.write_en = 1'd1;
+//
+//      l_shiftC_2.left = i0_2.out;
+//      l_shiftC_2.right = const1_2.out;
+//      addC_2.left = j0_2.out;
+//      addC_2.right = l_shiftA_2.out;
+//
+//      C0.addr0 = addC_2.out;
+//      C0.write_data = C0_tmp_2.out;
+//    }
+  }
+
+  control {
+    static seq {
+      //===========================================================================================
+      // LOAD LOGIC
+      //===========================================================================================
+
+      init_l;
+
+      static repeat 32 {
+        static seq {
+          write_main_mem;
+          incr_l;
+        } // end static seq
+      } // end static repeat
+
+      //===========================================================================================
+      // MATRIX MULTIPLICATION
+      //===========================================================================================
+
+//      static par {
+//
+//        // ++++++++++ MATRIX MULT PE 1 ++++++++++
+//        static seq {
+//          init_i_1;
+//
+//          static repeat 2 { // loop over the rows
+//            static seq {
+//              init_j_1;
+//
+//              static repeat 2 { // loop over the columns
+//                static seq {
+//                  static par {
+//                    init_k_1;
+//                    reset_C0_tmp_1;
+//                  } // end static par
+//
+//                  static repeat 2 { // loop over elements to accumulate
+//                    static seq {
+//                      calc_addr_1;
+//                      write_tmp_regs_1;
+//
+//                      multiply_1;
+//                      update_1;
+//
+//                      incr_k_1;
+//                    } // static seq
+//                  } // end loop k
+//
+//                  write_val_1;
+//                  incr_j_1;
+//                } // end static seq
+//              } // end loop j
+//
+//              incr_i_1;
+//            } // end static seq
+//          } // end loop i
+//        } // end matrix mult 1
+//
+//        // ++++++++++ MATRIX MULT PE 2 ++++++++++
+//        static seq {
+//          init_i_2;
+//
+//          static repeat 2 { // loop over the rows
+//            static seq {
+//              init_j_2;
+//
+//              static repeat 2 { // loop over the columns
+//                static seq {
+//                  static par {
+//                    init_k_2;
+//                    reset_C0_tmp_2;
+//                  } // end static par
+//
+//                  static repeat 2 { // loop over elements to accumulate
+//                    static seq {
+//                      calc_addr_2;
+//                      write_tmp_regs_2;
+//
+//                      multiply_2;
+//                      update_2;
+//
+//                      incr_k_2;
+//                    } // end static seq
+//                  } // end loop k
+//
+//                  write_val_2;
+//                  incr_j_2;
+//                } // end static seq
+//              } // end loop j
+//
+//              incr_i_2;
+//            } // end static seq 
+//          } // end loop i
+//        } // end matrix mult 2
+//      } // end static par
+
+      //===========================================================================================
+      // UNLOAD LOGIC
+      //===========================================================================================
+
+      init_l;
+
+      static repeat 32 {
+        static seq {
+          read_main_mem_r;
+          read_main_mem_w;
+          incr_l;
+        } // end static seq
+      } // end static repeat
+
+    } // end static seq
+  } // end control
+}

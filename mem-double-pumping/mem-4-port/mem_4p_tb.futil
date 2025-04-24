@@ -1,0 +1,225 @@
+// An iterative mutltiplier
+import "primitives/core.futil";
+import "primitives/memories/seq.futil";
+import "seq_mem_4_port.futil";
+
+component main() -> () {
+  cells {
+    @external(1) memA = seq_mem_d1(32, 8, 3);  // loads/stores to part 0 of MEM_TEST
+    @external(1) memB = seq_mem_d1(32, 8, 3);  // loads/stores to part 1 of MEM_TEST
+    @external(1) memC = seq_mem_d1(32, 8, 3);  // loads/stores to part 2 of MEM_TEST
+    @external(1) memD = seq_mem_d1(32, 8, 3);  // loads/stores to part 3 of MEM_TEST
+
+    MEM_TEST = seq_mem_4_port(32, 8, 3);
+
+    reg_addrA = std_reg(3);
+    reg_addrB = std_reg(3);
+    reg_addrC = std_reg(3);
+    reg_addrD = std_reg(3);
+
+    reg_addr0 = std_reg(3);
+    reg_addr1 = std_reg(3);
+    reg_addr2 = std_reg(3);
+    reg_addr3 = std_reg(3);
+
+    addA = std_add(3);
+    addB = std_add(3);
+    addC = std_add(3);
+    addD = std_add(3);
+    add0 = std_add(3);
+    add1 = std_add(3);
+    add2 = std_add(3);
+    add3 = std_add(3);
+
+    constA = std_const(3,0);
+    constB = std_const(3,1);
+    constC = std_const(3,6);
+    constD = std_const(3,7);
+    const0 = std_const(3,0);
+    const1 = std_const(3,1);
+    const2 = std_const(3,6);
+    const3 = std_const(3,7);
+
+    const_2 =std_const(3,2);
+  }
+
+  wires {
+    // Port 0 load/stores
+    static<5> group write_port0 {
+      memA.addr0 = reg_addrA.out;
+      memA.content_en = 1'd1;
+
+      MEM_TEST.addr0 = reg_addr0.out;
+      MEM_TEST.write_en0 = memA.done;
+      MEM_TEST.content_en0 = memA.done;
+
+      MEM_TEST.write_data0 = memA.read_data;
+    }
+//    static<2> group read_port0 {
+//      MEM_TEST.addr0 = reg_addr0.out;
+//      MEM_TEST.content_en0 = 1'd1;
+//
+//      memA.addr0 = reg_addrA.out;
+//      memA.write_en = MEM_TEST.done0;
+//      memA.content_en = MEM_TEST.done0;
+//
+//      memA.write_data = MEM_TEST.read_data0;
+//    }
+
+    // Port 1 load/stores
+    static<5> group write_port1 {
+      memB.addr0 = reg_addrB.out;
+      memB.content_en = 1'd1;
+
+      MEM_TEST.addr1 = reg_addr1.out;
+      MEM_TEST.write_en1 = memB.done;
+      MEM_TEST.content_en1 = memB.done;
+
+      MEM_TEST.write_data1 = memB.read_data;
+    }
+//    static<2> group read_port1 {
+//      MEM_TEST.addr1 = reg_addr1.out;
+//      MEM_TEST.content_en1 = 1'd1;
+//
+//      memB.addr0 = reg_addrB.out;
+//      memB.write_en = MEM_TEST.done1;
+//      memB.content_en = MEM_TEST.done1;
+//
+//      memB.write_data = MEM_TEST.read_data1;
+//    }
+
+    // Port 2 load/stores
+//    static<5> group write_port2 {
+//      memC.addr0 = reg_addrC.out;
+//      memC.content_en = 1'd1;
+//
+//      MEM_TEST.addr2 = reg_addr2.out;
+//      MEM_TEST.write_en2 = memC.done;
+//      MEM_TEST.content_en2 = memC.done;
+//
+//      MEM_TEST.write_data2 = memC.read_data;
+//    }
+    static<5> group read_port2_r {
+      MEM_TEST.addr2 = reg_addr2.out;
+      MEM_TEST.content_en2 = 1'd1;
+    }
+    static<1> group read_port2_w {
+      memC.addr0 = reg_addrC.out;
+      memC.write_en = 1'd1;
+      memC.content_en = 1'd1;
+
+      memC.write_data = MEM_TEST.read_data2;
+    }
+
+    // Port 3 load/stores
+//    static<2> group write_port3 {
+//      memD.addr0 = reg_addrD.out;
+//      memD.content_en = 1'd1;
+//
+//      MEM_TEST.addr3 = reg_addr3.out;
+//      MEM_TEST.write_en3 = memD.done;
+//      MEM_TEST.content_en3 = memD.done;
+//
+//      MEM_TEST.write_data3 = memD.read_data;
+//    }
+    static<5> group read_port3_r {
+      MEM_TEST.addr3 = reg_addr3.out;
+      MEM_TEST.content_en3 = 1'd1;
+    }
+    static<1> group read_port3_w {
+      memD.addr0 = reg_addrD.out;
+      memD.write_en = 1'd1;
+      memD.content_en = 1'd1;
+
+      memD.write_data = MEM_TEST.read_data3;
+    }
+
+    // Address wire groups
+    static<1> group init_addr {
+      reg_addrA.write_en = 1'd1;
+      reg_addrA.in = constA.out;
+      reg_addrB.write_en = 1'd1;
+      reg_addrB.in = constB.out;
+      reg_addrC.write_en = 1'd1;
+      reg_addrC.in = constC.out;
+      reg_addrD.write_en = 1'd1;
+      reg_addrD.in = constD.out;
+
+      reg_addr0.write_en = 1'd1;
+      reg_addr0.in = const0.out;
+      reg_addr1.write_en = 1'd1;
+      reg_addr1.in = const1.out;
+      reg_addr2.write_en = 1'd1;
+      reg_addr2.in = const2.out;
+      reg_addr3.write_en = 1'd1;
+      reg_addr3.in = const3.out;
+    }
+    static<1> group incr {
+      reg_addrA.write_en = 1'd1;
+      addA.left = reg_addrA.out;
+      addA.right = const_2.out;
+      reg_addrA.in = addA.out;
+
+      reg_addrB.write_en = 1'd1;
+      addB.left = reg_addrB.out;
+      addB.right = const_2.out;
+      reg_addrB.in = addB.out;
+
+      reg_addrC.write_en = 1'd1;
+      addC.left = reg_addrC.out;
+      addC.right = const_2.out;
+      reg_addrC.in = addC.out;
+
+      reg_addrD.write_en = 1'd1;
+      addD.left = reg_addrD.out;
+      addD.right = const_2.out;
+      reg_addrD.in = addD.out;
+
+      reg_addr0.write_en = 1'd1;
+      add0.left = reg_addr0.out;
+      add0.right = const_2.out;
+      reg_addr0.in = add0.out;
+
+      reg_addr1.write_en = 1'd1;
+      add1.left = reg_addr1.out;
+      add1.right = const_2.out;
+      reg_addr1.in = add1.out;
+
+      reg_addr2.write_en = 1'd1;
+      add2.left = reg_addr2.out;
+      add2.right = const_2.out;
+      reg_addr2.in = add2.out;
+
+      reg_addr3.write_en = 1'd1;
+      add3.left = reg_addr3.out;
+      add3.right = const_2.out;
+      reg_addr3.in = add3.out;
+    }
+  }
+
+  control {
+    static seq {
+      init_addr;
+
+      static repeat 5 {
+        static seq {
+
+          static par {
+            write_port0;
+            write_port1;
+            static seq {
+              read_port2_r;
+              read_port2_w;
+            }
+            static seq {
+              read_port3_r;
+              read_port3_w;
+            }
+          }
+
+          incr;
+        }
+      }
+    }
+  }
+}

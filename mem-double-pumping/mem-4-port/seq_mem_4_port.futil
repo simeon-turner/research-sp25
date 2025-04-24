@@ -1,0 +1,37 @@
+// A four-port memory interface with a one cycle read and write latency;
+// Reading or writing is not uniformly restricted to each port (can read and write one same cyce)
+extern "seq_mem_4_port.sv" {
+  primitive seq_mem_4_port[WIDTH, SIZE, IDX_SIZE](
+    @clk clk: 1,
+    clk2x: 1,
+    @reset reset: 1,
+    @write_together(1) @data addr0: IDX_SIZE,
+    @write_together(2) @data addr1: IDX_SIZE,
+    @write_together(3) @data addr2: IDX_SIZE,
+    @write_together(4) @data addr3: IDX_SIZE,
+    @write_together(1) @interval(1) @go(1) content_en0: 1,
+    @write_together(2) @interval(1) @go(1) content_en1: 1,
+    @write_together(3) @interval(1) @go(1) content_en2: 1,
+    @write_together(4) @interval(1) @go(1) content_en3: 1,
+
+    // Write ports
+    @write_together(5) write_en0: 1,
+    @write_together(6) write_en1: 1,
+    @write_together(7) write_en2: 1,
+    @write_together(8) write_en3: 1,
+    @write_together(5) @data write_data0: WIDTH,
+    @write_together(6) @data write_data1: WIDTH,
+    @write_together(7) @data write_data2: WIDTH,
+    @write_together(8) @data write_data3: WIDTH
+  ) -> (
+    @stable read_data0: WIDTH,
+    @stable read_data1: WIDTH,
+    @stable read_data2: WIDTH,
+    @stable read_data3: WIDTH,
+    @done(1) done0: 1,
+    @done(1) done1: 1,
+    @done(1) done2: 1,
+    @done(1) done3: 1
+  );
+}
+
