@@ -123,12 +123,16 @@ module seq_mem_4_port
         read_buffer4[i] <= '0;
         read_out[i]     <= '0;
       end else begin
-        if (content_en[i] && !write_en[i])
+        if (content_en[i] && !write_en[i]) begin
           // send read out data from memory
           read_buffer1[i] <= mem[addr_buffer1[i]];
-        else
+        end else if (content_en[i] && write_en[i]) begin
+          // clobber read output when a write is performed
+          read_buffer1[i] <= 'x;
+        end else begin
           // read out stays the same if nothing else
           read_buffer1[i] <= read_buffer1[i];
+        end
         // send data through reg buffers regardless, unless reset is high
         read_buffer2[i] <= read_buffer1[i];
         read_buffer3[i] <= read_buffer2[i];
@@ -141,13 +145,12 @@ module seq_mem_4_port
   // Write logic
   always_ff @(posedge clk) begin
     for (int i = 0; i < 4; i=i+1) begin
-      if (!reset && content_en[i] && write_en[i]) begin
-        write_buffer1[i] <= write_data[i];
-        write_val1[i]    <= !reset && content_en[i] && write_en[i];
-      end
+      write_buffer1[i] <= write_data[i];
       write_buffer2[i] <= write_buffer1[i];
       write_buffer3[i] <= write_buffer2[i];
       write_buffer4[i] <= write_buffer3[i];
+      // our write data is only valid when write_en and content_en are high, and reset is low
+      write_val1[i]    <= !reset && content_en[i] && write_en[i];
       write_val2[i]    <= write_val1[i];
       write_val3[i]    <= write_val2[i];
       write_val4[i]    <= write_val3[i];
