@@ -1,0 +1,37 @@
+// A four-port memory interface with a one cycle read and write latency;
+// Reading or writing is not uniformly restricted to each port (can read and write one same cyce)
+extern "ram_4port.v" {
+  primitive ram_4port[DATA_WIDTH, MEMORY_DEPTH, ADDRESS_WIDTH](
+    @clk clk: 1,
+    //clk2x: 1,
+    @reset reset: 1,
+    @write_together(1) @data port0_addr: ADDRESS_WIDTH,
+    @write_together(2) @data port1_addr: ADDRESS_WIDTH,
+    @write_together(3) @data port2_addr: ADDRESS_WIDTH,
+    @write_together(4) @data port3_addr: ADDRESS_WIDTH,
+    @write_together(1) @interval(1) @go(1) port0_en: 1,
+    @write_together(2) @interval(1) @go(1) port1_en: 1,
+    @write_together(3) @interval(1) @go(1) port2_en: 1,
+    @write_together(4) @interval(1) @go(1) port3_en: 1,
+
+    // Write ports
+    @write_together(5) port0_we: 1,
+    @write_together(6) port1_we: 1,
+    @write_together(7) port2_we: 1,
+    @write_together(8) port3_we: 1,
+    @write_together(5) @data port0_write_data: DATA_WIDTH,
+    @write_together(6) @data port1_write_data: DATA_WIDTH,
+    @write_together(7) @data port2_write_data: DATA_WIDTH,
+    @write_together(8) @data port3_write_data: DATA_WIDTH
+  ) -> (
+    @stable port0_read_data: DATA_WIDTH,
+    @stable port1_read_data: DATA_WIDTH,
+    @stable port2_read_data: DATA_WIDTH,
+    @stable port3_read_data: DATA_WIDTH,
+    @done(1) port0_done: 1,
+    @done(1) port1_done: 1,
+    @done(1) port2_done: 1,
+    @done(1) port3_done: 1
+  );
+}
+

@@ -12,36 +12,36 @@ module seq_mem_4_port
   input  wire logic                clk,
   input  wire logic                clk2x,
   input  wire logic                reset,
-  input  wire logic [IDX_SIZE-1:0] addr0,
-  input  wire logic [IDX_SIZE-1:0] addr1,
-  input  wire logic [IDX_SIZE-1:0] addr2,
-  input  wire logic [IDX_SIZE-1:0] addr3,
+  input  wire logic [IDX_SIZE-1:0] port0_addr,
+  input  wire logic [IDX_SIZE-1:0] port1_addr,
+  input  wire logic [IDX_SIZE-1:0] port2_addr,
+  input  wire logic [IDX_SIZE-1:0] port3_addr,
 
   // General content signals
-  input  wire logic                content_en0,
-  input  wire logic                content_en1,
-  input  wire logic                content_en2,
-  input  wire logic                content_en3,
-  output      logic                done0,
-  output      logic                done1,
-  output      logic                done2,
-  output      logic                done3,
+  input  wire logic                port0_en,
+  input  wire logic                port1_en,
+  input  wire logic                port2_en,
+  input  wire logic                port3_en,
+  output      logic                port0_done,
+  output      logic                port1_done,
+  output      logic                port2_done,
+  output      logic                port3_done,
 
   // Read signals
-  output      logic [ WIDTH-1:0] read_data0,
-  output      logic [ WIDTH-1:0] read_data1,
-  output      logic [ WIDTH-1:0] read_data2,
-  output      logic [ WIDTH-1:0] read_data3,
+  output      logic [ WIDTH-1:0] port0_read_data,
+  output      logic [ WIDTH-1:0] port1_read_data,
+  output      logic [ WIDTH-1:0] port2_read_data,
+  output      logic [ WIDTH-1:0] port3_read_data,
 
   // Write signals
-  input  wire logic [ WIDTH-1:0] write_data0,
-  input  wire logic [ WIDTH-1:0] write_data1,
-  input  wire logic [ WIDTH-1:0] write_data2,
-  input  wire logic [ WIDTH-1:0] write_data3,
-  input  wire logic              write_en0,
-  input  wire logic              write_en1,
-  input  wire logic              write_en2,
-  input  wire logic              write_en3
+  input  wire logic [ WIDTH-1:0] port0_write_data,
+  input  wire logic [ WIDTH-1:0] port1_write_data,
+  input  wire logic [ WIDTH-1:0] port2_write_data,
+  input  wire logic [ WIDTH-1:0] port3_write_data,
+  input  wire logic              port0_we,
+  input  wire logic              port1_we,
+  input  wire logic              port2_we,
+  input  wire logic              port3_we
 );
 
   // Internal memory
@@ -50,38 +50,38 @@ module seq_mem_4_port
   // Registers for general content signals
   logic  content_en[0:3];
   logic  done[0:3];
-  assign content_en[0] = content_en0;
-  assign content_en[1] = content_en1;
-  assign content_en[2] = content_en2;
-  assign content_en[3] = content_en3;
-  assign done0         = done[0];
-  assign done1         = done[1];
-  assign done2         = done[2];
-  assign done3         = done[3];
+  assign content_en[0] = port0_en;
+  assign content_en[1] = port1_en;
+  assign content_en[2] = port2_en;
+  assign content_en[3] = port3_en;
+  assign port0_done    = done[0];
+  assign port1_done    = done[1];
+  assign port2_done    = done[2];
+  assign port3_done    = done[3];
 
   // Registers for reading from memory
   logic [IDX_SIZE-1:0] addr[0:3];
   logic [WIDTH-1:0]    read_out[0:3];
-  assign addr_buffer1[0] = addr0;
-  assign addr_buffer1[1] = addr1;
-  assign addr_buffer1[2] = addr2;
-  assign addr_buffer1[3] = addr3;
-  assign read_data0      = read_out[0];
-  assign read_data1      = read_out[1];
-  assign read_data2      = read_out[2];
-  assign read_data3      = read_out[3];
+  assign addr_buffer1[0] = port0_addr;
+  assign addr_buffer1[1] = port1_addr;
+  assign addr_buffer1[2] = port2_addr;
+  assign addr_buffer1[3] = port3_addr;
+  assign port0_read_data = read_out[0];
+  assign port1_read_data = read_out[1];
+  assign port2_read_data = read_out[2];
+  assign port3_read_data = read_out[3];
 
   // Registers for writing to memory
   logic             write_en[0:3];
   logic [WIDTH-1:0] write_data[0:3];
-  assign write_data[0] = write_data0;
-  assign write_data[1] = write_data1;
-  assign write_data[2] = write_data2;
-  assign write_data[3] = write_data3;
-  assign write_en[0]   = write_en0;
-  assign write_en[1]   = write_en1;
-  assign write_en[2]   = write_en2;
-  assign write_en[3]   = write_en3;
+  assign write_data[0] = port0_write_data;
+  assign write_data[1] = port1_write_data;
+  assign write_data[2] = port2_write_data;
+  assign write_data[3] = port3_write_data;
+  assign write_en[0]   = port0_we;
+  assign write_en[1]   = port1_we;
+  assign write_en[2]   = port2_we;
+  assign write_en[3]   = port3_we;
 
   // Buffer registers for 5 cycle read/write latency
   logic [IDX_SIZE-1:0] addr_buffer1[0:3];
