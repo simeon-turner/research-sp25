@@ -2,7 +2,7 @@
 
 import "primitives/core.futil";
 import "primitives/memories/seq.futil";
-import "static_multiplier.futil";
+import "static-multiplier/static_multiplier.futil";
 
 component main() -> () {
   cells {
