@@ -2,7 +2,7 @@
  * A 4 port memory interface
  */
 
-module seq_mem_4_port
+module seq_mem_4port
 #(
   parameter WIDTH = 32,
   parameter SIZE = 16,

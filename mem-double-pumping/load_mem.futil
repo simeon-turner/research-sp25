@@ -4,7 +4,7 @@
 import "primitives/core.futil";
 import "primitives/memories/seq.futil";
 import "matrix-multiplier/static_multiplier.futil";
-import "mem-4-port/seq_mem_4_port.futil";
+import "mem-4-port/seq_mem_4port.futil";
 
 
 

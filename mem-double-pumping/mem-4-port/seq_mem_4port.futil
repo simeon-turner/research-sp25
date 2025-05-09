@@ -1,7 +1,7 @@
 // A four-port memory interface with a one cycle read and write latency;
 // Reading or writing is not uniformly restricted to each port (can read and write one same cyce)
-extern "seq_mem_4_port.sv" {
-  primitive seq_mem_4_port[WIDTH, SIZE, IDX_SIZE](
+extern "seq_mem_4port.sv" {
+  primitive seq_mem_4port[WIDTH, SIZE, IDX_SIZE](
     @clk clk: 1,
     clk2x: 1,
     @reset reset: 1,

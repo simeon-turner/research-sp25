@@ -1,7 +1,7 @@
 // An iterative mutltiplier
 import "primitives/core.futil";
 import "primitives/memories/seq.futil";
-import "seq_mem_4_port.futil";
+import "seq_mem_4port.futil";
 
 component main() -> () {
   cells {
