@@ -5,6 +5,7 @@ import "primitives/core.futil";
 import "primitives/memories/seq.futil";
 import "static-multiplier/static_multiplier.futil";
 import "mem-4-port/seq_mem_4port.futil";
+import "double-pump/ram_4port.futil";
 
 
 
@@ -24,7 +25,8 @@ component main() -> () {
     @external(1) INPUT_MEM = seq_mem_d1(32, 32, 5);
     @external(1) OUTPUT_MEM = seq_mem_d1(32, 32, 5);
 
-    MAIN_MEM = seq_mem_4port(32, 32, 5);
+    //MAIN_MEM = seq_mem_4port(32, 32, 5);
+    MAIN_MEM = ram_4port(32, 32, 5);
 
     // constants with  bit width 32
     const0_32 = std_const(32, 0);
@@ -133,22 +135,22 @@ component main() -> () {
       INPUT_MEM.addr0 = load_addr.out;
       INPUT_MEM.content_en = 1'd1;
 
-      MAIN_MEM.addr0 = load_addr.out;
-      MAIN_MEM.write_en0 = INPUT_MEM.done;
-      MAIN_MEM.content_en0 = INPUT_MEM.done;
+      MAIN_MEM.port0_addr = load_addr.out;
+      MAIN_MEM.port0_we = INPUT_MEM.done;
+      MAIN_MEM.port0_en = INPUT_MEM.done;
 
-      MAIN_MEM.write_data0 = INPUT_MEM.read_data;
+      MAIN_MEM.port0_write_data = INPUT_MEM.read_data;
     }
     static<5> group read_main_mem_r {
-      MAIN_MEM.addr0 = load_addr.out;
-      MAIN_MEM.content_en0 = 1'd1;
+      MAIN_MEM.port0_addr = load_addr.out;
+      MAIN_MEM.port0_en = 1'd1;
     }
     static<1> group read_main_mem_w {
       OUTPUT_MEM.addr0 = load_addr.out;
       OUTPUT_MEM.write_en = 1'd1;
       OUTPUT_MEM.content_en = 1'd1;
 
-      OUTPUT_MEM.write_data = MAIN_MEM.read_data0;
+      OUTPUT_MEM.write_data = MAIN_MEM.port0_read_data;
     }
     
     //===========================================================================================
@@ -194,8 +196,8 @@ component main() -> () {
       C0_tmp_1.in = const0_32.out;
     }
     static<5> group calc_addr_1 {
-      MAIN_MEM.content_en0 = 1'd1;
-      MAIN_MEM.content_en1 = 1'd1;
+      MAIN_MEM.port0_en = 1'd1;
+      MAIN_MEM.port1_en = 1'd1;
 
       l_shiftA_1.left = i0_1.out;
       l_shiftA_1.right = const1_5.out;
@@ -211,14 +213,14 @@ component main() -> () {
       add_offB_1.left = addB_1.out;
       add_offB_1.right = offB_1.out;
 
-      MAIN_MEM.addr0 = add_offA_1.out;
-      MAIN_MEM.addr1 = add_offB_1.out;
+      MAIN_MEM.port0_addr = add_offA_1.out;
+      MAIN_MEM.port1_addr = add_offB_1.out;
     }
     static<1> group write_tmp_regs_1 {
       A0_tmp_1.write_en = 1'd1;
       B0_tmp_1.write_en = 1'd1;
-      A0_tmp_1.in = MAIN_MEM.read_data0;
-      B0_tmp_1.in = MAIN_MEM.read_data1;
+      A0_tmp_1.in = MAIN_MEM.port0_read_data;
+      B0_tmp_1.in = MAIN_MEM.port1_read_data;
     }
     static<33> group multiply_1 {
       mult32_1.left = A0_tmp_1.out;
@@ -230,8 +232,8 @@ component main() -> () {
       C0_tmp_1.in = add32_1.out;
     }
     static<5> group write_val_1 {
-      MAIN_MEM.content_en0 = 1'd1;
-      MAIN_MEM.write_en0 = 1'd1;
+      MAIN_MEM.port0_en = 1'd1;
+      MAIN_MEM.port0_we = 1'd1;
 
       l_shiftC_1.left = i0_1.out;
       l_shiftC_1.right = const1_5.out;
@@ -240,8 +242,8 @@ component main() -> () {
       add_offC_1.left = addC_1.out;
       add_offC_1.right = offC_1.out;
 
-      MAIN_MEM.addr0 = add_offC_1.out;
-      MAIN_MEM.write_data0 = C0_tmp_1.out;
+      MAIN_MEM.port0_addr = add_offC_1.out;
+      MAIN_MEM.port0_write_data = C0_tmp_1.out;
     }
 
     //===========================================================================================
@@ -287,8 +289,8 @@ component main() -> () {
       C0_tmp_2.in = const0_32.out;
     }
     static<5> group calc_addr_2 {
-      MAIN_MEM.content_en2 = 1'd1;
-      MAIN_MEM.content_en3 = 1'd1;
+      MAIN_MEM.port2_en = 1'd1;
+      MAIN_MEM.port3_en = 1'd1;
 
       l_shiftA_2.left = i0_2.out;
       l_shiftA_2.right = const1_5.out;
@@ -304,14 +306,14 @@ component main() -> () {
       add_offB_2.left = addB_2.out;
       add_offB_2.right = offB_2.out;
 
-      MAIN_MEM.addr2 = add_offA_2.out;
-      MAIN_MEM.addr3 = add_offB_2.out;
+      MAIN_MEM.port2_addr = add_offA_2.out;
+      MAIN_MEM.port3_addr = add_offB_2.out;
     }
     static<1> group write_tmp_regs_2 {
       A0_tmp_2.write_en = 1'd1;
       B0_tmp_2.write_en = 1'd1;
-      A0_tmp_2.in = MAIN_MEM.read_data2;
-      B0_tmp_2.in = MAIN_MEM.read_data3;
+      A0_tmp_2.in = MAIN_MEM.port2_read_data;
+      B0_tmp_2.in = MAIN_MEM.port3_read_data;
     }
     static<33> group multiply_2 {
       mult32_2.left = A0_tmp_2.out;
@@ -323,8 +325,8 @@ component main() -> () {
       C0_tmp_2.in = add32_2.out;
     }
     static<5> group write_val_2 {
-      MAIN_MEM.content_en2 = 1'd1;
-      MAIN_MEM.write_en2 = 1'd1;
+      MAIN_MEM.port2_en = 1'd1;
+      MAIN_MEM.port2_we = 1'd1;
 
       l_shiftC_2.left = i0_2.out;
       l_shiftC_2.right = const1_5.out;
@@ -333,8 +335,8 @@ component main() -> () {
       add_offC_2.left = addC_2.out;
       add_offC_2.right = offC_2.out;
 
-      MAIN_MEM.addr2 = add_offC_2.out;
-      MAIN_MEM.write_data2 = C0_tmp_2.out;
+      MAIN_MEM.port2_addr = add_offC_2.out;
+      MAIN_MEM.port2_write_data = C0_tmp_2.out;
     }
   }
 
